@@ -1,103 +1,104 @@
 import '../src/index.css';
-import { useState, useEffect, useMemo } from 'react';
+import {useEffect, useMemo, useState} from 'react';
 
 const url = 'https://pokeres.bastionbot.org/images/pokemon';
 
 export default function App() {
-  const poke = useMemo(
-    () => [
-      { id: 1, name: 'balbasaur' },
-      { id: 8, name: 'wartotle' },
-      { id: 9, name: 'blastoise' },
-      { id: 6, name: 'charizard' },
-      { id: 17, name: 'pidgeot' },
-      { id: 3, name: 'charmander' },
-      { id: 15, name: 'rattata' },
-      { id: 11, name: 'pidgey' },
-    ],
-    []
-  );
+    const poke = useMemo(
+        () => {
+            return [
+                {id: 1, name: 'balbasaur'},
+                {id: 8, name: 'wartotle'},
+                {id: 9, name: 'blastoise'},
+                {id: 6, name: 'charizard'},
+                {id: 17, name: 'pidgeot'},
+                {id: 3, name: 'charmander'},
+                {id: 15, name: 'rattata'},
+                {id: 11, name: 'pidgey'},
+            ];
+        },
+        []
+    );
 
-  function shuffle(array) {
-    var currentIndex = array.length,
-      randomIndex;
+    function shuffle(array) {
+        let currentIndex = array.length,
+            randomIndex;
 
-    while (0 !== currentIndex) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
+        while (0 !== currentIndex) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
 
-      [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex],
-        array[currentIndex],
-      ];
+            [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex],
+                array[currentIndex],
+            ];
+        }
+
+        return array;
     }
 
-    return array;
-  }
+    const [openCard, setOpenCard] = useState([]);
+    const [round, setRound] = useState([]);
+    const [shufflePokemon, setShufflePokemon] = useState([]);
 
-  const [openCard, setOpenCard] = useState([]);
-  const [round, setRound] = useState([]);
-  const [shufflePokemon, setShufflePokemon] = useState([]);
+    useEffect(() => {
+        let pokemons = [...poke, ...poke];
+        setShufflePokemon(shuffle(pokemons));
+    }, [poke]);
 
-  useEffect(() => {
-    const pokemons = [...poke, ...poke];
-    setShufflePokemon(shuffle(pokemons));
-  }, [poke]);
+    const handleClick = (index) => {
+        setOpenCard((open) => [...open, index]);
+    };
 
-  const handleClick = (index) => {
-    setOpenCard((open) => [...open, index]);
-  };
+    useEffect(() => {
+        const firstRound =
+            shufflePokemon[openCard[openCard.length < 2 ? 0 : openCard.length - 2]];
+        const secondRound =
+            shufflePokemon[openCard[openCard.length < 2 ? 1 : openCard.length - 1]];
 
-  useEffect(() => {
-    const firstRound =
-      shufflePokemon[openCard[openCard.length < 2 ? 0 : openCard.length - 2]];
-    const secondRound =
-      shufflePokemon[openCard[openCard.length < 2 ? 1 : openCard.length - 1]];
+        if (secondRound && firstRound.id === secondRound.id) {
+            setRound([...round, firstRound]);
+        }
 
-    if (secondRound && firstRound.id === secondRound.id) {
-      setRound([...round, firstRound]);
-    }
+        if (secondRound !== firstRound) {
+            if (openCard.length % 2 === 0)
+                setTimeout(() => setOpenCard(openCard.slice(0, -2)), 1000);
+        }
+    }, [openCard, round, shufflePokemon]);
 
-    if (secondRound !== firstRound) {
-      if (openCard.length % 2 === 0)
-        setTimeout(() => setOpenCard(openCard.slice(0, -2)), 1000);
-    }
-  }, [openCard, round, shufflePokemon]);
+    return (
+        <div className="app">
+            {shufflePokemon.map((pokemon, index) => {
+                let reverseCard;
+                reverseCard = false;
 
-  return (
-    <div className="app">
-      <div className="cards">
-        {shufflePokemon.map((pokemon, index) => {
-          var reverseCard = false;
+                if (openCard.includes(index)) {
+                    reverseCard = true;
+                }
 
-          if (openCard.includes(index)) {
-            reverseCard = true;
-          }
+                if (round.includes(pokemon.id)) {
+                    reverseCard = true;
+                }
 
-          if (round.includes(pokemon.id)) {
-            reverseCard = true;
-          }
-
-          return (
-            <div
-              className={`pokemon-card ${reverseCard ? 'reverse' : ''}`}
-              key={index}
-              onClick={() => handleClick(index)}
-            >
-              <div className="inner">
-                <div className="front">
-                  <img
-                    src={`${url}/${pokemon.id}.png`}
-                    alt="pokemon"
-                    width="150"
-                  />
-                </div>
-                <div className="back"></div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+                return (
+                    <div
+                        className={`pokemon-card ${reverseCard ? 'reverse' : ''}`}
+                        key={index}
+                        onClick={() => handleClick(index)}
+                    >
+                        <div className="inner">
+                            <div className="front">
+                                <img
+                                    src={`${url}/${pokemon.id}.png`}
+                                    alt="pokemon"
+                                    width="150"
+                                />
+                            </div>
+                            <div className="back"></div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
 }
